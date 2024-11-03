@@ -1,3 +1,4 @@
+import { useSession, signIn } from "next-auth/react";
 import { useQuery } from "react-query";
 import axios from "axios";
 
@@ -7,9 +8,23 @@ const fetchProjects = async () => {
 };
 
 export default function Dashboard() {
-  const { data: projects, isLoading } = useQuery("projects", fetchProjects);
+  const { data: session, status } = useSession();
+  const { data: projects, isLoading } = useQuery("projects", fetchProjects, {
+    enabled: status === "authenticated", // Only fetch projects if authenticated
+  });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (status === "loading") return <div>Loading session...</div>;
+
+  if (status === "unauthenticated") {
+    return (
+      <div>
+        <p>You must be signed in to view this page</p>
+        <button onClick={() => signIn()}>Sign in</button>
+      </div>
+    );
+  }
+
+  if (isLoading) return <div>Loading projects...</div>;
 
   return (
     <div>

@@ -1,17 +1,13 @@
-// Disable specific ESLint rule for the entire file
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-param-reassign */
+// pages/api/auth/[...nextauth].ts
 
-import NextAuth, { NextAuthOptions } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import GitHubProvider from 'next-auth/providers/github';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import prisma from "../../../lib/prisma/prisma"; // Adjust the path according to your project structure
 
-const prisma = new PrismaClient();
-
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+export default NextAuth({
+  // Configure one or more authentication providers
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -22,29 +18,17 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
   ],
+  adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, user }) {
-      // eslint-disable-next-line no-param-reassign
-      if (!session.user) {
-        session.user = { id: user.id }; // Initialize user if undefined
-      } else {
-        session.user.id = user.id; // Assign user ID
-      }
+      // Add property to session, like an access_token from a provider.
+      session.user.id = user.id;
       return session;
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile, email, credentials }) {
+      // Custom sign-in logic (if needed)
       return true;
     },
   },
-  pages: {
-    signIn: '/auth/signin',
-  },
-  session: {
-    strategy: 'database',
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-};
-
-// Enable ESLint rules again if needed
-/* eslint-enable no-unused-vars */
-/* eslint-enable no-param-reassign */
+});
