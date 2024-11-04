@@ -5,6 +5,17 @@ import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "../../../lib/prisma/prisma"; // Adjust the path according to your project structure
+import { Session } from "next-auth";
+
+// Extend the Session type
+interface CustomSession extends Session {
+  user: {
+    id: string; // Add the id property
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+}
 
 export default NextAuth({
   // Configure one or more authentication providers
@@ -22,11 +33,15 @@ export default NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, user }) {
-      // Add property to session, like an access_token from a provider.
-      session.user.id = user.id;
-      return session;
+      // Ensure session.user is defined
+      if (!session.user) {
+        session.user = { id: user.id, name: null, email: null, image: null }; // Initialize user with all properties
+      } else {
+        session.user.id = user.id; // Assign user.id if user is already defined
+      }
+      return session as CustomSession; // Cast session to CustomSession
     },
-    async signIn({ user, account, profile, email, credentials }) {
+    async signIn({ user, account }) {
       // Custom sign-in logic (if needed)
       return true;
     },

@@ -1,34 +1,36 @@
+// Define the datasource
 datasource db {
-  provider = "postgresql" // or "mysql" or "sqlite" based on your setup
-  url      = env("DATABASE_URL")
+  provider = "postgresql" // Change this to your database provider (e.g., "mysql", "sqlite", etc.)
+  url      = env("DATABASE_URL") // The connection URL to your database, stored in an environment variable
 }
 
+// Define the generator
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js" // This generates the Prisma Client
 }
-
+   
 model User {
-  id            String   @id @default(uuid())
-  name          String?
-  email         String   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
+       id    String   @id @default(cuid())
+       name  String?
+       email String?  @unique
+       accounts Account[]
+       sessions Session[]
 }
 
 model Account {
-  id                String  @id @default(uuid())
-  userId            String
-  provider          String
+  id               String  @id @default(cuid())
+  userId           String
+  provider         String
   providerAccountId String
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user             User    @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId]) // Compound unique constraint
 }
 
-model Session {
-  id           String   @id @default(uuid())
-  userId       String
-  expires      DateTime
-  sessionToken String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+   model Session {
+       id           String   @id @default(cuid())
+       sessionToken String   @unique
+       userId      String
+       user        User     @relation(fields: [userId], references: [id])
+   }
